@@ -1,21 +1,29 @@
 import csv
 import sys
 
+from electre import electre_tri_b
+
 
 def main():
     if len(sys.argv) <= 2:
-        print("Supply a data and parameters files")
+        print(
+            "Supply a data and parameters files\n",
+            " -example python3 main.py ../data.csv params.txt",
+        )
         exit()
 
     datafile = sys.argv[1]
     paramsfile = sys.argv[2]
 
+    ids = []
     data = []
     with open(datafile, "r") as f:
         reader = csv.reader(f)
         next(reader)
         for row in reader:
-            data.append(row)
+            name = row[0]
+            ids.append(name)
+            data.append(list(map(float, row[1:])))
 
     with open(paramsfile, "r") as f:
 
@@ -35,14 +43,16 @@ def main():
             row = f.readline()
 
     print(
-        data,
-        types,
-        indifferences,
-        prefferences,
-        vetos,
-        weights,
-        credibility_threshold,
-        boundaries,
+        electre_tri_b(
+            data,
+            types,
+            indifferences,
+            prefferences,
+            vetos,
+            weights,
+            credibility_threshold,
+            boundaries,
+        )
     )
 
 
