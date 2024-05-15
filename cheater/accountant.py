@@ -2,15 +2,16 @@ from player import Player
 
 
 class Accountant(Player):
-    def __init__(self, name):  # only run once
+    def __init__(self, name, min_cheat=True):  # only run once
         super().__init__(name)
         self._just_played = False    # auxilary variable for counting cards in pile
         self._reset_counts()
 
+        self.min_cheat = min_cheat
+
     def putCard(self, declared_card):
         self._just_played = True
         assert self.cards is not None
-        self.playing_set = self.playing_set | set(self.cards)
 
         legal_cards = self.cards
         if declared_card is not None:
@@ -25,17 +26,24 @@ class Accountant(Player):
         if len(self.cards) == 1:
             return "draw"
 
+        # cheat
         play = min(self.cards, key=lambda c: c[0])
+        declare = declared_card
+        if not self.min_cheat:
+            declare = max(self._getDeck(), key=lambda c: c[0])
         self.pile.append(play)
-        return play, declared_card
+        return play, declare
 
     def checkCard(self, opponent_declaration):
+        his_cards_num = 16 - len(self.cards) - len(self.pile)
         if opponent_declaration in self.cards or opponent_declaration in self.pile:
             return True
 
         return False
 
     def getCheckFeedback(self, checked, iChecked, iDrewCards, revealedCard, noTakenCards, log=True):
+        assert self.cards is not None
+        self.playing_set = self.playing_set | set(self.cards)
         if log:
             print("Feedback = " + self.name + " : checked this turn = " + str(checked) +
                   "; I checked = " + str(iChecked) + "; I drew cards = " +
@@ -95,3 +103,6 @@ class Accountant(Player):
         self.i_moved = 0
         self.he_moved = 0
         self.playing_set = set()
+
+    def _getDeck(self):
+        return set([(number, color) for color in range(4) for number in range(9, 15)])
