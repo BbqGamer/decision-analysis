@@ -59,13 +59,13 @@ class CountingCheatySaint(Saint):
 class Accountant(Player):
     def __init__(self, name):
         super().__init__(name)
-        # self.his_counts = [None] * 9
-        self._pile_counts = [None] * 6
+        self.pile = []
         self._num_his_checks = 0     # might be useful later
         self._just_played = None     # auxilary variable for counting cards in pile
-        self._last_declaration = None
+        self._prev_cards = None
 
     def putCard(self, declared_card):
+        self._just_played = True
         assert self.cards is not None
         legal_cards = self.cards
         if declared_card is not None:
@@ -74,42 +74,68 @@ class Accountant(Player):
 
         if legal_cards:
             play = min(legal_cards, key=lambda c: c[0])
-            self._just_played = play
-            self._last_declaration = play
+            self.pile.append(play)
             return play, play
 
         if len(self.cards) == 1:
-            self._last_declaration = None
             return "draw"
 
         play = min(self.cards, key=lambda c: c[0])
-        self._just_played = play
-        self._last_declaration = declared_card
+        self.pile.append(play)
         return play, declared_card
 
     def checkCard(self, opponent_declaration):
-        if opponent_declaration in self.cards or opponent_declaration in self._pile_counts:
+        if opponent_declaration in self.cards or opponent_declaration in self.pile:
             return True
 
         return False
 
     def getCheckFeedback(self, checked, iChecked, iDrewCards, revealedCard, noTakenCards, log=True):
+        print(self._prev_cards, self.cards)
+        if self._prev_cards != self.cards:
+            print("[END]")
+            self.pile = []
+
         if log:
             print("Feedback = " + self.name + " : checked this turn = " + str(checked) +
                   "; I checked = " + str(iChecked) + "; I drew cards = " +
                   str(iDrewCards) + "; revealed card = " +
                   str(revealedCard) + "; number of taken cards = " + str(noTakenCards))
 
-        if noTakenCards:
-            assert self.cards is not None
-            drawn = self._pile_counts[-noTakenCards:]
-            self._pile_counts = self._pile_counts[:-noTakenCards]
-        else:
-            if self._just_played:
-                self._pile_counts.append(self._just_played)
-                self._just_played = None
-            else:
-                self._pile_counts.append(None)
+        print("[ARGS]", checked, iChecked,
+              iDrewCards, revealedCard, noTakenCards)
+        print("[JUST PLAYED]", self._just_played)
+        print("[BEFORE] I think that this was current pile", self.pile)
 
-        if checked and not iChecked:
-            self._num_his_checks += 1
+        if not checked:
+            if noTakenCards is None:  # normal move
+                if not self._just_played:
+                    self.pile.append(None)
+            else:  # drawn
+                self.pile = self.pile[:-noTakenCards]
+        else:  # someone checked
+            if iChecked:
+                if iDrewCards:
+                    self.pile = self.pile[:-noTakenCards]
+                else:
+                    self.pile = self.pile[:-noTakenCards+1]
+            else:
+                if iDrewCards:
+                    self.pile = self.pile[:-noTakenCards]
+                else:
+                    self.pile = self.pile[:-noTakenCards]
+
+        if self._just_played:
+            self._just_played = False
+
+        print("[AFTER] I think that this is current pile", self.pile)
+
+        assert self.cards is not None
+        self._prev_cards = self.cards.copy()
+        # if not self.cards:
+        #     print("[VICTORY]!!!")
+        #     self.pile = []
+
+        # if len(self.cards) + len(self.pile) == 26:
+        #     print("[DEFEAT]!!!")
+        #     self.pile = []

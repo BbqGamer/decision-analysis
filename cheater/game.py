@@ -4,6 +4,7 @@ import numpy as np
 import random
 import logging
 
+
 class Game():
     def __init__(self, players, log=False):
         self.players = players
@@ -19,18 +20,19 @@ class Game():
         for i, cards in zip([0, 1], self.player_cards):
             self.players[i].startGame(cards.copy())
             if log:
-                print("Player (" + str(i + 1) + "): " + self.players[i].name + " received:")
+                print("Player (" + str(i + 1) + "): " +
+                      self.players[i].name + " received:")
                 print(self.players[i].cards)
 
-        ### Which card is on top
+        # Which card is on top
         self.true_card = None
-        ### Which card was declared by active player
+        # Which card was declared by active player
         self.declared_card = None
 
-        ### Init pile: [-1] = top card
+        # Init pile: [-1] = top card
         self.pile = []
 
-        ### Which player moves
+        # Which player moves
         self.player_move = np.random.randint(2)
 
     def getDeck(self):
@@ -41,11 +43,15 @@ class Game():
         A = set(random.sample(deck, 8))
         B = set(random.sample(list(D - A), 8))
         C = D - A - B
-        if len(A.intersection(B)) > 0: print("Shuffle error 1")
-        if len(A.intersection(B)) > 0: print("Shuffle error 2")
-        if len(A.intersection(C)) > 0: print("Shuffle error 3")
+        if len(A.intersection(B)) > 0:
+            print("Shuffle error 1")
+        if len(A.intersection(B)) > 0:
+            print("Shuffle error 2")
+        if len(A.intersection(C)) > 0:
+            print("Shuffle error 3")
         DS = A | B | C
-        if not DS == D: print("Shuffle error 4")
+        if not DS == D:
+            print("Shuffle error 4")
         return list(A), list(B), list(C)
 
     def takeTurn(self, log=False):
@@ -56,7 +62,8 @@ class Game():
             print("")
             print("")
             print("==== CURRENT STATE ================================")
-            print("==== " + self.players[self.player_move].name + " MOVES ====")
+            print(
+                "==== " + self.players[self.player_move].name + " MOVES ====")
             print("Player (0): " + self.players[0].name + " hand:")
             print(self.players[0].cards)
             print("Player (1): " + self.players[1].name + " hand:")
@@ -76,14 +83,17 @@ class Game():
 
         if decision == "draw":
 
-            if log: print("[+] " + activePlayer.name + " decides to draw cards")
+            if log:
+                print("[+] " + activePlayer.name + " decides to draw cards")
 
             self.draw_decisions[self.player_move] += 1
 
             toTake = self.pile[max([-3, -len(self.pile)]):]
-            for c in toTake: self.pile.remove(c)
+            for c in toTake:
+                self.pile.remove(c)
             activePlayer.takeCards(toTake)
-            for c in toTake: self.player_cards[self.player_move].append(c)
+            for c in toTake:
+                self.player_cards[self.player_move].append(c)
 
             self.declared_card = None
             self.true_card = None
@@ -93,12 +103,15 @@ class Game():
 
         else:
             self.true_card, self.declared_card = decision
-            if self.true_card != self.declared_card: self.cheats[self.player_move] += 1
+            if self.true_card != self.declared_card:
+                self.cheats[self.player_move] += 1
 
-            if log: print("[+] " + activePlayer.name + " puts " + str(self.true_card) +
-                          " and declares " + str(self.declared_card))
+            if log:
+                print("[+] " + activePlayer.name + " puts " + str(self.true_card) +
+                      " and declares " + str(self.declared_card))
 
-            if not self.debugMove(): return False, self.player_move
+            if not self.debugMove():
+                return False, self.player_move
 
             activePlayer.cards.remove(self.true_card)
             self.player_cards[self.player_move].remove(self.true_card)
@@ -114,26 +127,36 @@ class Game():
 
                 self.checks[1 - self.player_move] += 1
 
-                if log: print("[!] " + opponent.name + ": " + "I want to check")
+                if log:
+                    print("[!] " + opponent.name + ": " + "I want to check")
                 toTake = self.pile[max([-3, -len(self.pile)]):]
-                for c in toTake: self.pile.remove(c)
+                for c in toTake:
+                    self.pile.remove(c)
 
                 if not self.true_card == self.declared_card:
-                    if log: print("\tYou are right!")
+                    if log:
+                        print("\tYou are right!")
                     activePlayer.takeCards(toTake)
 
-                    activePlayer.getCheckFeedback(True, False, True, None, len(toTake), log)
-                    opponent.getCheckFeedback(True, True, False, tuple(toTake[-1]), len(toTake), log)
+                    activePlayer.getCheckFeedback(
+                        True, False, True, None, len(toTake), log)
+                    opponent.getCheckFeedback(
+                        True, True, False, tuple(toTake[-1]), len(toTake), log)
 
-                    for c in toTake: self.player_cards[self.player_move].append(c)
+                    for c in toTake:
+                        self.player_cards[self.player_move].append(c)
                 else:
-                    if log: print("\tYou are wrong!")
+                    if log:
+                        print("\tYou are wrong!")
                     opponent.takeCards(toTake)
 
-                    activePlayer.getCheckFeedback(True, False, False, None, len(toTake), log)
-                    opponent.getCheckFeedback(True, True, True, tuple(toTake[-1]), len(toTake), log)
+                    activePlayer.getCheckFeedback(
+                        True, False, False, None, len(toTake), log)
+                    opponent.getCheckFeedback(
+                        True, True, True, tuple(toTake[-1]), len(toTake), log)
 
-                    for c in toTake: self.player_cards[1 - self.player_move].append(c)
+                    for c in toTake:
+                        self.player_cards[1 - self.player_move].append(c)
 
                 if log:
                     print("Cards taken: ")
@@ -142,15 +165,18 @@ class Game():
                 self.declared_card = None
                 self.true_card = None
             else:
-                activePlayer.getCheckFeedback(False, False, False, None, None, log)
+                activePlayer.getCheckFeedback(
+                    False, False, False, None, None, log)
                 opponent.getCheckFeedback(False, False, False, None, None, log)
 
-        if not self.debugGeneral(): return False, self.player_move
+        if not self.debugGeneral():
+            return False, self.player_move
         return True, self.player_move
 
     def isFinished(self, log=False):
         if len(self.players[self.player_move].cards) == 0:
-            if log: print(self.players[self.player_move].name + " wins!")
+            if log:
+                print(self.players[self.player_move].name + " wins!")
             return True
         return False
 
@@ -160,7 +186,8 @@ class Game():
             return False
         if (self.previous_declaration is not None) and (self.true_card[0] < self.previous_declaration[0]) and \
                 len(self.players[self.player_move].cards) == 1:
-            print("[ERROR] Last played card should be valid (it is revealed, you cannot cheat)!")
+            print(
+                "[ERROR] Last played card should be valid (it is revealed, you cannot cheat)!")
             return False
         if np.array(self.true_card).size != 2:
             print("[ERROR] You put too many cards!")
