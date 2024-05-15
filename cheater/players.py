@@ -46,20 +46,11 @@ class CheatySaint(Saint):
         return min(self.cards, key=lambda c: c[0]), declared_card
 
 
-class CountingCheatySaint(Saint):
-    def checkCard(self, opponent_declaration):
-        """Check if we have three cards of the type that player said"""
-        counts = {}
-        if self.cards is not None:
-            counts = Counter([c[0] for c in self.cards])
-
-        if counts[opponent_declaration] == 4:
-            return True
-
-        return False
-
-
 class Acer(Player):
+    """Player draws if has to plays card if can and cheats 
+        by playing some random ace whenever can't place card
+    """
+
     def putCard(self, declared_card):
         if len(self.cards) == 1:
             if declared_card and (declared_card[0] > self.cards[0][0]):

@@ -3,6 +3,8 @@ import random
 
 
 class Accountant(Player):
+    """Player tries to count cards in his hand and some of cards in the pile, then it makes decision accordingly"""
+
     def __init__(self, name, min_cheat=True):  # only run once
         super().__init__(name)
         self._just_played = False    # auxilary variable for counting cards in pile
@@ -31,7 +33,16 @@ class Accountant(Player):
         play = min(self.cards, key=lambda c: c[0])
         declare = declared_card
         if not self.min_cheat:
-            declare = max(self._getDeck(), key=lambda c: c[0])
+            frompile = None
+            for card in self.pile:
+                if card is not None and card[0] >= declared_card[0]:
+                    frompile = card
+                    break
+            if frompile is not None:
+                declare = frompile
+            else:
+                declare = (14, random.randint(0, 3))
+
         self.pile.append(play)
         return play, declare
 
