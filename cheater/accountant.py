@@ -9,8 +9,9 @@ class Accountant(Player):
 
     def putCard(self, declared_card):
         self._just_played = True
-
         assert self.cards is not None
+        self.playing_set = self.playing_set | set(self.cards)
+
         legal_cards = self.cards
         if declared_card is not None:
             legal_cards = list(
@@ -43,6 +44,7 @@ class Accountant(Player):
 
         print("[ARGS]", checked, iChecked,
               iDrewCards, revealedCard, noTakenCards)
+        print(self.playing_set)
         print("[JUST PLAYED]", self._just_played)
         print("[BEFORE] I think that this was current pile", self.pile)
 
@@ -92,3 +94,4 @@ class Accountant(Player):
         self.pile = []
         self.i_moved = 0
         self.he_moved = 0
+        self.playing_set = set()
