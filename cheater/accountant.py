@@ -1,4 +1,5 @@
 from player import Player
+import random
 
 
 class Accountant(Player):
@@ -35,11 +36,33 @@ class Accountant(Player):
         return play, declare
 
     def checkCard(self, opponent_declaration):
-        his_cards_num = 16 - len(self.cards) - len(self.pile)
+        assert self.cards is not None
         if opponent_declaration in self.cards or opponent_declaration in self.pile:
             return True
 
-        return False
+        n_his_cards = 16 - len(self.cards) - len(self.pile)
+
+        known = filter(lambda a: a is not None, self.cards + self.pile)
+        unknown = self._getDeck() - set(known)
+        legal = list(
+            filter(lambda c: c[0] >= opponent_declaration[0], unknown))
+        nunknown = len(unknown)
+        nlegal = len(legal)
+        nillegal = nunknown - nlegal
+
+        # calculate chance that opponent doesn't have the required card
+        # if has more cards than illegal
+        if n_his_cards > nillegal:
+            return False
+
+        prob_doesnt_have = 1
+        for i in range(n_his_cards):
+            x = (nillegal - i) / (nunknown - i)
+            prob_doesnt_have *= x
+
+        print("Possible cards: ", legal)
+        print("Probability ", prob_doesnt_have)
+        return random.random() < prob_doesnt_have
 
     def getCheckFeedback(self, checked, iChecked, iDrewCards, revealedCard, noTakenCards, log=True):
         assert self.cards is not None
