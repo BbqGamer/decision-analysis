@@ -67,15 +67,13 @@ class Acer(Player):
 
 
 class AccountantFactory:
-    def __init__(self, min_cheat=False, risk_it_all=True, log=False):
-        self.min_cheat = min_cheat
-        self.risk_it_all = risk_it_all
+    def __init__(self, cheating_strategy="pile", log=False):
+        self.cheating_strategy = cheating_strategy
         self.log = log
 
     def __call__(self, name, *args: Any, **kwds: Any) -> Any:
         return Accountant(
             name=name,
-            min_cheat=self.min_cheat,
-            risk_it_all=self.risk_it_all,
+            cheating_strategy=self.cheating_strategy,
             log=self.log,
         )

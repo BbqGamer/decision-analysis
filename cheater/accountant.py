@@ -6,15 +6,12 @@ from player import Player
 class Accountant(Player):
     """Player tries to count cards in his hand and some of cards in the pile, then it makes decision accordingly"""
 
-    def __init__(
-        self, name, min_cheat=False, risk_it_all=True, log=False
-    ):  # only run once
+    def __init__(self, name, cheating_strategy="pile", log=False):  # only run once
         super().__init__(name)
         self._just_played = False  # auxilary variable for counting cards in pile
         self._reset_counts()
 
-        self.min_cheat = min_cheat
-        self.risk_it_all = risk_it_all
+        self.cheating_strategy = cheating_strategy
 
         self.log = log
 
@@ -23,36 +20,47 @@ class Accountant(Player):
         assert self.cards is not None
 
         legal_cards = self.cards
+
+        # Update legal cards with respect to the declared card
         if declared_card is not None:
             legal_cards = list(filter(lambda c: c >= declared_card, legal_cards))
 
+        # Play the smallest legal card
         if legal_cards:
-            play = min(legal_cards, key=lambda c: c[0])
-            self.pile.append(play)
-            return play, play
+            smallest_legal = min(legal_cards, key=lambda c: c[0])
+            self.pile.append(smallest_legal)
+            return tuple(smallest_legal), tuple(smallest_legal)
 
+        # Play the very last card safely
         if len(self.cards) == 1:
-            if self.risk_it_all:
-                return self.cards[0], self.cards[0]
-            else:
-                return "draw"
+            return "draw"
 
-        # cheat
-        play = min(self.cards, key=lambda c: c[0])
-        declare = declared_card
-        if not self.min_cheat:
-            frompile = None
+        # Cheat by playing the smallest card
+        smallest_illegal = min(self.cards, key=lambda c: c[0])
+        self.pile.append(smallest_illegal)
+
+        # Declare card value based on cheating strategy
+
+        declare = None
+
+        if self.cheating_strategy == "pile":
             for card in self.pile:
                 if card is not None and card[0] >= declared_card[0]:
-                    frompile = card
+                    declare = tuple(card)
                     break
-            if frompile is not None:
-                declare = frompile
-            else:
-                declare = (14, random.randint(0, 3))
 
-        self.pile.append(play)
-        return play, declare
+        if declare is None:
+            declare = (
+                {
+                    "min": declared_card[0],
+                    "max": 14,
+                    "random": random.randint(declared_card[0], 14),
+                    "pile": 14,
+                }[self.cheating_strategy],
+                random.randint(0, 3),
+            )
+
+        return (tuple(smallest_illegal), tuple(declare))
 
     def checkCard(self, opponent_declaration):
         assert self.cards is not None
