@@ -6,12 +6,16 @@ from player import Player
 class Accountant(Player):
     """Player tries to count cards in his hand and some of cards in the pile, then it makes decision accordingly"""
 
-    def __init__(self, name, min_cheat=True, log=False):  # only run once
+    def __init__(
+        self, name, min_cheat=False, risk_it_all=True, log=False
+    ):  # only run once
         super().__init__(name)
         self._just_played = False  # auxilary variable for counting cards in pile
         self._reset_counts()
 
         self.min_cheat = min_cheat
+        self.risk_it_all = risk_it_all
+
         self.log = log
 
     def putCard(self, declared_card):
@@ -28,7 +32,10 @@ class Accountant(Player):
             return play, play
 
         if len(self.cards) == 1:
-            return "draw"
+            if self.risk_it_all:
+                return self.cards[0], self.cards[0]
+            else:
+                return "draw"
 
         # cheat
         play = min(self.cards, key=lambda c: c[0])
