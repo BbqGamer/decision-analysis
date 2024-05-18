@@ -1,8 +1,8 @@
 import random
 from typing import Any
-from player import Player
-from collections import Counter
+
 from accountant import Accountant
+from player import Player
 
 # inspired from this article https://medium.com/game-of-theories/the-game-theory-of-bullshit-aed0872251e8
 
@@ -14,8 +14,7 @@ class Saint(Player):
         assert self.cards is not None
         legal_cards = self.cards
         if declared_card is not None:
-            legal_cards = list(
-                filter(lambda c: c >= declared_card, legal_cards))
+            legal_cards = list(filter(lambda c: c >= declared_card, legal_cards))
 
         if legal_cards:
             play = min(legal_cards, key=lambda c: c[0])
@@ -33,8 +32,7 @@ class CheatySaint(Saint):
         assert self.cards is not None
         legal_cards = self.cards
         if declared_card is not None:
-            legal_cards = list(
-                filter(lambda c: c >= declared_card, legal_cards))
+            legal_cards = list(filter(lambda c: c >= declared_card, legal_cards))
 
         if legal_cards:
             play = min(legal_cards, key=lambda c: c[0])
@@ -47,8 +45,8 @@ class CheatySaint(Saint):
 
 
 class Acer(Player):
-    """Player draws if has to plays card if can and cheats 
-        by playing some random ace whenever can't place card
+    """Player draws if has to plays card if can and cheats
+    by playing some random ace whenever can't place card
     """
 
     def putCard(self, declared_card):
@@ -69,8 +67,9 @@ class Acer(Player):
 
 
 class AccountantFactory:
-    def __init__(self, min_cheat=True):
+    def __init__(self, min_cheat=True, log=False):
         self.min_cheat = min_cheat
+        self.log = log
 
     def __call__(self, name, *args: Any, **kwds: Any) -> Any:
-        return Accountant(name=name, min_cheat=self.min_cheat)
+        return Accountant(name=name, min_cheat=self.min_cheat, log=self.log)
