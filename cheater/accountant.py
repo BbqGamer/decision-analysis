@@ -6,7 +6,7 @@ from player import Player
 class Accountant(Player):
     """Player tries to count cards in his hand and some of cards in the pile, then it makes decision accordingly"""
 
-    def __init__(self, name, cheating_strategy="pile", log=False):  # only run once
+    def __init__(self, name, cheating_strategy="smallest", log=False):  # only run once
         super().__init__(name)
         self._just_played = False  # auxilary variable for counting cards in pile
         self._reset_counts()
@@ -14,6 +14,11 @@ class Accountant(Player):
         self.cheating_strategy = cheating_strategy
 
         self.log = log
+
+    def _play(self, true, declared):
+        self.pile.append(true)
+        self.i_declared = self.i_declared | set(declared)
+        return tuple(true), tuple(declared)
 
     def putCard(self, declared_card):
         self._just_played = True
@@ -25,11 +30,53 @@ class Accountant(Player):
         if declared_card is not None:
             legal_cards = list(filter(lambda c: c >= declared_card, legal_cards))
 
+        if len(self.cards) > 1 and self.cheating_strategy == "smallest":
+            play = min(self.cards, key=lambda c: c[0])
+            declare = None
+
+            legal_not_i_declared = set(legal_cards) - (self.i_declared - set(play))
+
+            if legal_not_i_declared:
+                declare = min(legal_not_i_declared, key=lambda c: c[0])
+            else:
+                unknown = list(
+                    filter(
+                        lambda c: c >= declared_card,
+                        (
+                            self._getDeck()
+                            - self.i_declared
+                            - self.he_declared
+                            - self.playing_set
+                        ),
+                    )
+                )
+
+                if unknown:
+                    declare = min(unknown, key=lambda c: c[0])
+                elif legal_cards:
+                    declare = smallest_legal = min(legal_cards, key=lambda c: c[0])
+                else:
+                    all_except_for_his = list(
+                        filter(
+                            lambda c: c >= declared_card,
+                            self._getDeck()
+                            - (self.playing_set - set(self.pile) - set(self.cards)),
+                        )
+                    )
+                    if all_except_for_his:
+                        declare = random.sample(all_except_for_his, 1)[0]
+                    else:
+                        declare = (
+                            random.randint(declared_card[0], 14),
+                            random.randint(0, 3),
+                        )
+
+            return self._play(play, declare)
+
         # Play the smallest legal card
         if legal_cards:
             smallest_legal = min(legal_cards, key=lambda c: c[0])
-            self.pile.append(smallest_legal)
-            return tuple(smallest_legal), tuple(smallest_legal)
+            return self._play(smallest_legal, smallest_legal)
 
         # Play the very last card safely
         if len(self.cards) == 1:
@@ -37,32 +84,21 @@ class Accountant(Player):
 
         # Cheat by playing the smallest card
         smallest_illegal = min(self.cards, key=lambda c: c[0])
-        self.pile.append(smallest_illegal)
 
-        # Declare card value based on cheating strategy
-
+        # Declare one from the cards in the pile or ace
         declare = None
-
-        if self.cheating_strategy == "pile":
-            for card in self.pile:
-                if card is not None and card[0] >= declared_card[0]:
-                    declare = tuple(card)
-                    break
-
+        for card in self.pile:
+            if card is not None and card[0] >= declared_card[0]:
+                declare = tuple(card)
+                break
         if declare is None:
-            declare = (
-                {
-                    "min": declared_card[0],
-                    "max": 14,
-                    "random": random.randint(declared_card[0], 14),
-                    "pile": 14,
-                }[self.cheating_strategy],
-                random.randint(0, 3),
-            )
+            declare = (14, random.randint(0, 3))
 
-        return (tuple(smallest_illegal), tuple(declare))
+        return self._play(smallest_illegal, declare)
 
     def checkCard(self, opponent_declaration):
+        self.he_declared = self.he_declared | set(opponent_declaration)
+
         assert self.cards is not None
         if opponent_declaration in self.cards or opponent_declaration in self.pile:
             return True
@@ -95,7 +131,11 @@ class Accountant(Player):
         self, checked, iChecked, iDrewCards, revealedCard, noTakenCards, log=False
     ):
         assert self.cards is not None
+
         self.playing_set = self.playing_set | set(self.cards)
+        if revealedCard:
+            self.playing_set = self.playing_set | set(revealedCard)
+
         if log:
             print(
                 "Feedback = "
@@ -111,7 +151,6 @@ class Accountant(Player):
                 + "; number of taken cards = "
                 + str(noTakenCards)
             )
-
             print("[ARGS]", checked, iChecked, iDrewCards, revealedCard, noTakenCards)
             print(self.playing_set)
             print("[JUST PLAYED]", self._just_played)
@@ -168,6 +207,8 @@ class Accountant(Player):
         self.i_moved = 0
         self.he_moved = 0
         self.playing_set = set()
+        self.i_declared = set()
+        self.he_declared = set()
 
     def _getDeck(self):
         return set([(number, color) for color in range(4) for number in range(9, 15)])

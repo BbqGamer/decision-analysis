@@ -67,7 +67,7 @@ class Acer(Player):
 
 
 class AccountantFactory:
-    def __init__(self, cheating_strategy="pile", log=False):
+    def __init__(self, cheating_strategy="smallest", log=False):
         self.cheating_strategy = cheating_strategy
         self.log = log
 
